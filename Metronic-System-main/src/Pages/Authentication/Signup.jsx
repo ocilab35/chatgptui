@@ -3,50 +3,70 @@ import { AuthContext } from "../../Context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../../firebase";
 import { signInWithPopup } from "firebase/auth";
+
 function Signup() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { register, googleAuth } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const validateInputs = () => {
+    if (!name || name.length < 2) {
+      setError("Name must be at least 2 characters long.");
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address.");
+      return false;
+    }
     if (password.length < 8) {
-      alert("Password must be at least 8 characters long.");
+      setError("Password must be at least 8 characters long.");
       return false;
     }
     return true;
   };
 
-  // Signup.js (update handleSubmit)
-  // In the handleSubmit function of Signup.js
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    if (!validateInputs()) return;
+    setError(null);
+    setIsLoading(true);
+
+    if (!validateInputs()) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await register(name, email, password);
       alert("Registration successful! You can now log in.");
       navigate("/Dash-Board");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
+    setError(null);
+    setIsLoading(true);
+
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const googleUser = result.user;
-
-      // Use the googleAuth function from AuthContext
       await googleAuth(googleUser.email, googleUser.displayName);
-
       alert("Successfully registered with Google");
       navigate("/Dash-Board");
     } catch (error) {
-      console.error("Google Sign-In Error:", error.message);
-      setError(error.response?.data?.message || "Google registration failed");
+      setError(
+        error.message || "Google registration failed. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -82,18 +102,24 @@ function Signup() {
               </Link>
             </div>
           </div>
+          {error && (
+            <div className="bg-red-100 text-red-700 p-3 rounded text-sm">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-2.5">
             <button
               type="button"
               className="btn btn-light btn-sm justify-center"
               onClick={handleGoogleSignIn}
+              disabled={isLoading}
             >
               <img
                 alt=""
                 className="size-3.5 shrink-0"
                 src="assets/media/brand-logos/google.svg"
               />{" "}
-              Use Google
+              {isLoading ? "Loading..." : "Use Google"}
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -101,28 +127,28 @@ function Signup() {
             <span className="text-2xs text-gray-600 uppercase">or</span>
             <span className="border-t border-gray-200 w-full"></span>
           </div>
-
           <div className="flex flex-col gap-1">
             <label className="form-label text-gray-900">Name</label>
             <input
               className="input"
               type="text"
-              placeholder="enter Name"
+              placeholder="Enter Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
-
           <div className="flex flex-col gap-1">
             <label className="form-label text-gray-900">Email</label>
             <input
               className="input"
               type="email"
-              placeholder="enter email"
+              placeholder="Enter email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -131,19 +157,20 @@ function Signup() {
             </label>
             <input
               className="input"
-              placeholder="password"
+              placeholder="Password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={isLoading}
             />
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             className="btn btn-primary flex justify-center grow"
             type="submit"
+            disabled={isLoading}
           >
-            Sign up
+            {isLoading ? "Signing up..." : "Sign up"}
           </button>
         </form>
       </div>
