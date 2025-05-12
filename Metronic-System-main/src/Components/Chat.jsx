@@ -21,7 +21,7 @@ import {
   CornerUpRight,
 } from "lucide-react";
 
-const Chat = ({ darkMode, newChatTrigger = 0 }) => {
+const Chat = ({ darkMode, newChatTrigger, activeChatId, setChats, error }) => {
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState([]);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -33,7 +33,6 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
   const fileInputRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  // Initialize speech recognition
   useEffect(() => {
     if ("webkitSpeechRecognition" in window) {
       recognitionRef.current = new window.webkitSpeechRecognition();
@@ -65,27 +64,61 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
     };
   }, [isListening]);
 
-  // Auto scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Focus input on new chat trigger
   useEffect(() => {
-    if (newChatTrigger > 0) {
-      // Reset the chat
+    if (activeChatId) {
+      const fetchChat = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) throw new Error("No token found");
+
+          const response = await fetch(
+            `http://localhost:5000/api/chats/${activeChatId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (!response.ok) throw new Error("Failed to fetch chat");
+          const chat = await response.json();
+          setMessages(
+            chat.messages.map((msg) => ({
+              id: msg._id,
+              text: msg.text,
+              sender: msg.sender,
+              time: new Date(msg.time).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              images: msg.images || [],
+              likes: msg.likes || 0,
+              dislikes: msg.dislikes || 0,
+            }))
+          );
+          setShowWelcome(chat.messages.length === 0);
+        } catch (error) {
+          console.error("Error fetching chat:", error);
+        }
+      };
+
+      fetchChat();
+    } else {
       setMessages([]);
       setShowWelcome(true);
-      setInputValue("");
-      setUploadedImages([]);
-      // Focus the input with a slight delay to ensure the DOM is ready
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
     }
-  }, [newChatTrigger]);
+  }, [activeChatId, newChatTrigger]);
 
-  // Handle voice input
+  useEffect(() => {
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  }, [newChatTrigger, activeChatId]);
+
   const handleVoiceInput = () => {
     if (!("webkitSpeechRecognition" in window)) {
       alert("Speech recognition is not supported in your browser");
@@ -101,7 +134,6 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
     }
   };
 
-  // Handle file upload
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
@@ -115,18 +147,24 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
 
       setUploadedImages((prev) => [...prev, ...newImages]);
 
-      // If there's no text input, add a placeholder message
       if (inputValue.trim() === "") {
         setInputValue("Check out these images:");
       }
     }
   };
 
-  // Handle message submission
-  const handleSendMessage = () => {
-    if (inputValue.trim() === "" && uploadedImages.length === 0) return;
+  const generateTitle = (text) => {
+    const words = text.trim().split(/\s+/);
+    if (words.length > 10) {
+      return words.slice(0, 10).join(" ") + "...";
+    }
+    return text.substring(0, 30) || "New Chat";
+  };
 
-    // Add user message
+  const handleSendMessage = async () => {
+    if (inputValue.trim() === "" && uploadedImages.length === 0) return;
+    if (!activeChatId) return;
+
     const newMessage = {
       id: Date.now(),
       text: inputValue,
@@ -135,35 +173,97 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
         hour: "2-digit",
         minute: "2-digit",
       }),
-      images: uploadedImages.length > 0 ? [...uploadedImages] : null,
+      images: uploadedImages.map((img) => img.url),
+      likes: 0,
+      dislikes: 0,
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setInputValue("");
     setUploadedImages([]);
     setShowWelcome(false);
 
-    // Add bot reply after a short delay
-    setTimeout(() => {
-      const botReply = {
-        id: Date.now() + 1,
-        text:
-          uploadedImages.length > 0
-            ? "Thanks for sharing these images! How can I assist you with them?"
-            : "Thank you for your message! This is a static reply for now, but I'll be happy to assist you with any questions or tasks.",
-        sender: "bot",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        likes: 0,
-        dislikes: 0,
-      };
-      setMessages((prevMessages) => [...prevMessages, botReply]);
-    }, 1000);
+    const newTitle = generateTitle(inputValue);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+
+      const messageResponse = await fetch(
+        `http://localhost:5000/api/chats/${activeChatId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: inputValue,
+            sender: "user",
+            images: uploadedImages.map((img) => img.url),
+          }),
+        }
+      );
+
+      if (!messageResponse.ok) throw new Error("Failed to send message");
+
+      if (messages.length === 0) {
+        const titleResponse = await fetch(
+          `http://localhost:5000/api/chats/${activeChatId}/title`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ title: newTitle }),
+          }
+        );
+
+        if (!titleResponse.ok) throw new Error("Failed to update title");
+
+        const updatedChat = await titleResponse.json();
+        setChats((prev) =>
+          prev.map((chat) => (chat._id === activeChatId ? updatedChat : chat))
+        );
+      }
+
+      setTimeout(() => {
+        const botReply = {
+          id: Date.now() + 1,
+          text:
+            uploadedImages.length > 0
+              ? "Thanks for sharing these images! How can I assist you with them?"
+              : "Thank you for your message! This is a static reply for now.",
+          sender: "bot",
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          likes: 0,
+          dislikes: 0,
+        };
+
+        setMessages((prevMessages) => [...prevMessages, botReply]);
+
+        fetch(`http://localhost:5000/api/chats/${activeChatId}/messages`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: botReply.text,
+            sender: "bot",
+            images: [],
+          }),
+        }).catch((error) => console.error("Error saving bot reply:", error));
+      }, 1000);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
-  // Copy message text to clipboard
   const copyToClipboard = (text, id) => {
     navigator.clipboard
       .writeText(text)
@@ -178,14 +278,11 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
       });
   };
 
-  // Handle reply to message
   const replyToMessage = (text) => {
     setInputValue(`"${text}" `);
-    // Focus on textarea
-    document.querySelector("textarea").focus();
+    inputRef.current?.focus();
   };
 
-  // Handle like/dislike
   const handleReaction = (messageId, reaction) => {
     setMessages((prevMessages) =>
       prevMessages.map((msg) => {
@@ -201,7 +298,6 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
     );
   };
 
-  // Handle Enter key in textarea
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -215,7 +311,16 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
         darkMode ? "bg-gray-900" : "bg-gray-50"
       }`}
     >
-      {/* Messages area */}
+      {error && (
+        <div
+          className={`mb-4 p-2 rounded-lg ${
+            darkMode ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800"
+          }`}
+        >
+          {error}
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto mb-4 flex flex-col">
         {showWelcome ? (
           <div className="flex-1 flex flex-col items-center justify-center">
@@ -291,13 +396,12 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
                   >
                     <div className="text-sm">{msg.text}</div>
 
-                    {/* Display images if they exist */}
-                    {msg.images && (
+                    {msg.images && msg.images.length > 0 && (
                       <div className="mt-2 grid grid-cols-2 gap-2">
-                        {msg.images.map((image) => (
-                          <div key={image.id} className="relative">
+                        {msg.images.map((image, index) => (
+                          <div key={index} className="relative">
                             <img
-                              src={image.url}
+                              src={image}
                               alt="Uploaded content"
                               className="rounded-md object-cover w-full h-24"
                             />
@@ -330,7 +434,6 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
                     </div>
                   </div>
 
-                  {/* Message actions */}
                   <div
                     className={`absolute ${
                       msg.sender === "user"
@@ -380,7 +483,6 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
                       />
                     </button>
 
-                    {/* Only show like/dislike for bot messages */}
                     {msg.sender === "bot" && (
                       <>
                         <button
@@ -441,7 +543,6 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
         )}
       </div>
 
-      {/* Preview uploaded images */}
       {uploadedImages.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2">
           {uploadedImages.map((image) => (
@@ -467,7 +568,6 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
         </div>
       )}
 
-      {/* Input area */}
       <div
         className={`w-full relative rounded-lg shadow-sm border ${
           darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
@@ -478,12 +578,17 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
             className={`w-full h-full outline-none resize-none text-sm ${
               darkMode ? "bg-gray-800 text-white placeholder-gray-400" : ""
             }`}
-            placeholder="Message BotAI..."
+            placeholder={
+              !activeChatId
+                ? "Select or create a chat to start typing"
+                : "Message BotAI..."
+            }
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
             ref={inputRef}
+            disabled={!activeChatId}
           ></textarea>
         </div>
 
@@ -499,6 +604,7 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
                 darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
               }`}
               title="Upload image"
+              disabled={!activeChatId}
             >
               <ImageIcon
                 size={16}
@@ -526,6 +632,7 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
                   : "hover:bg-gray-100"
               }`}
               title={isListening ? "Stop listening" : "Voice input"}
+              disabled={!activeChatId}
             >
               <Mic
                 size={16}
@@ -542,7 +649,10 @@ const Chat = ({ darkMode, newChatTrigger = 0 }) => {
             <button
               className="bg-blue-600 text-white p-1.5 rounded-full hover:bg-blue-700"
               onClick={handleSendMessage}
-              disabled={inputValue.trim() === "" && uploadedImages.length === 0}
+              disabled={
+                (inputValue.trim() === "" && uploadedImages.length === 0) ||
+                !activeChatId
+              }
             >
               <Send size={16} />
             </button>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   MessageSquare,
   Image,
@@ -7,6 +7,8 @@ import {
   ChevronDown,
   Smartphone,
   Award,
+  Edit2,
+  Trash2,
 } from "lucide-react";
 
 const Sidebar = ({
@@ -16,27 +18,39 @@ const Sidebar = ({
   showMore,
   setShowMore,
   onNewChat,
+  chats,
+  onSelectChat,
+  activeChatId,
+  onEditChatTitle,
+  onDeleteChat,
 }) => {
-  const recentChats = [
-    "It is a long established fact th",
-    "When an unknown printer too",
-  ];
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
 
-  const last7DaysChats = [
-    "But also the leap into electron",
-    "It was popularised in the 198C",
-  ];
-
-  const last30DaysChats = [
-    "Contrary to popular belief, Lor",
-    'Finibus Bonorum et Malorum"',
-    "Written in 45 BC. This book is",
-    "The standard chunk of Lorem",
-  ];
-
-  // Handler for new chat button
   const handleNewChat = () => {
     if (onNewChat) onNewChat();
+  };
+
+  const startEditing = (chat) => {
+    setEditingChatId(chat._id);
+    setEditTitle(chat.title);
+  };
+
+  const saveEdit = (chatId) => {
+    if (editTitle.trim()) {
+      onEditChatTitle(chatId, editTitle);
+    }
+    setEditingChatId(null);
+    setEditTitle("");
+  };
+
+  const handleKeyDown = (e, chatId) => {
+    if (e.key === "Enter") {
+      saveEdit(chatId);
+    } else if (e.key === "Escape") {
+      setEditingChatId(null);
+      setEditTitle("");
+    }
   };
 
   return (
@@ -105,82 +119,84 @@ const Sidebar = ({
                 darkMode ? "text-gray-400" : "text-gray-500"
               } mb-1`}
             >
-              Recent
+              Chats
             </div>
-            {recentChats.map((chat, index) => (
+            {chats.map((chat) => (
               <div
-                key={`recent-${index}`}
-                className={`flex items-center p-1.5 rounded-lg ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                } cursor-pointer`}
-                onClick={handleNewChat}
+                key={chat._id}
+                className={`flex items-center p-1.5 rounded-lg group ${
+                  activeChatId === chat._id
+                    ? darkMode
+                      ? "bg-gray-700"
+                      : "bg-gray-100"
+                    : darkMode
+                    ? "hover:bg-gray-700"
+                    : "hover:bg-gray-100"
+                } cursor-pointer relative`}
               >
-                <FileText
-                  size={14}
-                  className={`mr-1.5 ${
-                    darkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                />
-                <span className="text-xs truncate">{chat}</span>
+                {editingChatId === chat._id ? (
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(e, chat._id)}
+                    onBlur={() => saveEdit(chat._id)}
+                    className={`flex-1 text-xs p-1 rounded ${
+                      darkMode
+                        ? "bg-gray-700 text-white"
+                        : "bg-white text-black"
+                    }`}
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <FileText
+                      size={14}
+                      className={`mr-1.5 ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    />
+                    <span
+                      className="text-xs truncate flex-1"
+                      onClick={() => onSelectChat(chat._id)}
+                    >
+                      {chat.title}
+                    </span>
+                    <div className="opacity-0 group-hover:opacity-100 flex space-x-1">
+                      <button
+                        onClick={() => startEditing(chat)}
+                        className={`p-1 rounded-full ${
+                          darkMode ? "hover:bg-gray-600" : "hover:bg-gray-200"
+                        }`}
+                      >
+                        <Edit2
+                          size={12}
+                          className={
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }
+                        />
+                      </button>
+                      <button
+                        onClick={() => onDeleteChat(chat._id)}
+                        className={`p-1 rounded-full ${
+                          darkMode ? "hover:bg-gray-600" : "hover:bg-gray-200"
+                        }`}
+                      >
+                        <Trash2
+                          size={12}
+                          className={
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }
+                        />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
 
           <div className="mt-2 px-2">
-            <div
-              className={`text-xs ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              } mb-1`}
-            >
-              Last 7 Days
-            </div>
-            {last7DaysChats.map((chat, index) => (
-              <div
-                key={`7days-${index}`}
-                className={`flex items-center p-1.5 rounded-lg ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                } cursor-pointer`}
-                onClick={handleNewChat}
-              >
-                <FileText
-                  size={14}
-                  className={`mr-1.5 ${
-                    darkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                />
-                <span className="text-xs truncate">{chat}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-2 px-2">
-            <div
-              className={`text-xs ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              } mb-1`}
-            >
-              Last 30 Days
-            </div>
-            {last30DaysChats.map((chat, index) => (
-              <div
-                key={`30days-${index}`}
-                className={`flex items-center p-1.5 rounded-lg ${
-                  darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                } cursor-pointer`}
-                onClick={handleNewChat}
-              >
-                <FileText
-                  size={14}
-                  className={`mr-1.5 ${
-                    darkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                />
-                <span className="text-xs truncate">{chat}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-1 px-2">
             <div
               className={`flex items-center p-1.5 rounded-lg ${
                 darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
@@ -201,7 +217,6 @@ const Sidebar = ({
                   className={`flex items-center p-1.5 rounded-lg ${
                     darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
                   } cursor-pointer`}
-                  onClick={handleNewChat}
                 >
                   <FileText
                     size={14}
@@ -215,7 +230,6 @@ const Sidebar = ({
                   className={`flex items-center p-1.5 rounded-lg ${
                     darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
                   } cursor-pointer`}
-                  onClick={handleNewChat}
                 >
                   <FileText
                     size={14}
