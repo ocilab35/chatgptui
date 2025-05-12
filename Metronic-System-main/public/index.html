@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="A powerful dashboard built with React & Tailwind CSS" />
+    <meta name="robots" content="follow, index" />
+
+    <title>Metronic - Tailwind CSS</title>
+    <link rel="canonical" href="https://127.0.0.1:8001/metronic-tailwind-html/demo1/index.html" />
+    <link rel="canonical" href="https://your-production-url.com" />
+    <link rel="icon" href="/assets/media/app/favicon.ico" />
+    <link rel="apple-touch-icon" href="/assets/media/app/apple-touch-icon.png" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link rel="stylesheet" href="./assets/vendors/apexcharts/apexcharts.css" />
+    <link rel="stylesheet" href="./assets/vendors/keenicons/styles.bundle.css" />
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+</head>
+
+<body class="">
+    <!-- <body class="antialiased flex h-full text-base text-gray-700 bg-white dark:bg-gray-900"> -->
+
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <script>
+        const defaultThemeMode = 'light'; // light|dark|system
+        let themeMode;
+
+        if (document.documentElement) {
+            if (localStorage.getItem('theme')) {
+                themeMode = localStorage.getItem('theme');
+            } else if (document.documentElement.hasAttribute('data-theme-mode')) {
+                themeMode = document.documentElement.getAttribute('data-theme-mode');
+            } else {
+                themeMode = defaultThemeMode;
+            }
+
+            if (themeMode === 'system') {
+                themeMode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+
+            document.documentElement.classList.add(themeMode);
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/ktdatatable@1.0.0/ktdatatable.min.js"></script>
+
+    <!-- <script src="./assets/Mode.js"></script> -->
+    <script src="./assets/js/core.bundle.js"></script>
+    <script src="./assets/vendors/apexcharts/apexcharts.min.js"></script>
+    <script src="./assets/js/widgets/general.js"></script>
+    <script src="./assets/js/layouts/demo1.js"></script>
+</body>
+
+</html>
