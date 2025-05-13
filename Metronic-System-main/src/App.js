@@ -15,7 +15,7 @@ import Home from "./Components/Home";
 import { AuthProvider } from "./Context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import Navbar from "./Components/Navbar";
-
+//dashboard
 function DashboardLayout() {
   return (
     <>
