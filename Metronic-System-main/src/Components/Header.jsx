@@ -1,4 +1,7 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
+import SettingsDrawer from './SettingsDrawer';
+import ContactUsDrawer from "./ContactUsDrawer";
+import PrivacyPolicyDrawer from "./PrivacyPolicyDrawer";
 import {
   ChevronLeft,
   ChevronRight,
@@ -6,8 +9,9 @@ import {
   Moon,
   Share,
   LogOut,
-  User,
+  ShieldCheck,
   Settings,
+  MailIcon,
 } from "lucide-react";
 import { AuthContext } from "../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +24,11 @@ const Header = ({
 }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
+  const [showContactDrawer, setShowContactDrawer] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+
+
 
   const getUserInitial = () => {
     if (!user) {
@@ -87,17 +96,15 @@ const Header = ({
 
   return (
     <header
-      className={`border-b ${
-        darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
-      } py-2 px-4 flex items-center justify-between sticky top-0 z-50 shadow-sm`}
+      className={`border-b ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
+        } py-2 px-4 flex items-center justify-between sticky top-0 z-50 shadow-sm`}
     >
       {/* Left side - Collapse button */}
       <div className="flex items-center">
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className={`p-2 rounded-full ${
-            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-          } transition-colors duration-200`}
+          className={`p-2 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+            } transition-colors duration-200`}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {sidebarCollapsed ? (
@@ -118,9 +125,8 @@ const Header = ({
       <div className="flex items-center gap-4">
         {/* Dark mode toggle */}
         <button
-          className={`p-2 rounded-full ${
-            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-          } transition-colors duration-200`}
+          className={`p-2 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+            } transition-colors duration-200`}
           onClick={() => setDarkMode(!darkMode)}
           aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
         >
@@ -133,9 +139,8 @@ const Header = ({
 
         {/* Share button */}
         <button
-          className={`p-2 rounded-full ${
-            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-          } transition-colors duration-200`}
+          className={`p-2 rounded-full ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+            } transition-colors duration-200`}
           aria-label="Share"
         >
           <Share
@@ -156,64 +161,97 @@ const Header = ({
 
           {/* Dropdown menu */}
           <div
-            className={`absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 ${
-              darkMode ? "bg-gray-700" : "bg-white"
-            } hidden group-hover:block z-50 border ${
-              darkMode ? "border-gray-600" : "border-gray-200"
-            }`}
+            className={`absolute right-0 mt-2 w-56 rounded-md shadow-lg py-1 ${darkMode ? "bg-gray-700" : "bg-white"
+              } hidden group-hover:block z-50 border ${darkMode ? "border-gray-600" : "border-gray-200"
+              }`}
           >
             <div
-              className={`px-4 py-3 border-b ${
-                darkMode ? "border-gray-600" : "border-gray-200"
-              }`}
+              className={`px-4 py-3 border-b ${darkMode ? "border-gray-600" : "border-gray-200"
+                }`}
             >
               <p
-                className={`text-sm font-medium ${
-                  darkMode ? "text-white" : "text-gray-900"
-                }`}
+                className={`text-sm font-medium ${darkMode ? "text-white" : "text-gray-900"
+                  }`}
               >
                 {getDisplayName()}
               </p>
               <p
-                className={`text-xs ${
-                  darkMode ? "text-gray-300" : "text-gray-500"
-                } truncate`}
+                className={`text-xs ${darkMode ? "text-gray-300" : "text-gray-500"
+                  } truncate`}
               >
                 {user?.email || "No email"}
               </p>
             </div>
 
+            {/* Contact us */}
             <button
-              onClick={() => navigate("/profile")}
-              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
-                darkMode
-                  ? "text-gray-200 hover:bg-gray-600"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
+              onClick={() => setShowContactDrawer(true)}
+              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${darkMode
+                ? "text-gray-200 hover:bg-gray-600"
+                : "text-gray-700 hover:bg-gray-100"
+                }`}
             >
-              <User size={16} />
-              Profile
+              <MailIcon size={16} />
+              Contact Us
             </button>
 
+            {/* Privacy Policy */}
             <button
-              onClick={() => navigate("/settings")}
+              onClick={() => setShowPrivacyPolicy(true)}
               className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
-                darkMode
-                  ? "text-gray-200 hover:bg-gray-600"
-                  : "text-gray-700 hover:bg-gray-100"
+                darkMode ? "text-gray-200 hover:bg-gray-600" : "text-gray-700 hover:bg-gray-100"
               }`}
+            >
+              <ShieldCheck size={16} />
+              Privacy Policy
+            </button>
+            
+            {/* Settings */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${darkMode
+                ? "text-gray-200 hover:bg-gray-600"
+                : "text-gray-700 hover:bg-gray-100"
+                }`}
             >
               <Settings size={16} />
               Settings
             </button>
 
+            {/* Drawer */}
+
+              {showSettings && (
+                <SettingsDrawer
+                  isOpen={showSettings}
+                  onClose={() => setShowSettings(false)}
+                  darkMode={darkMode}
+                />
+              )}
+
+              {showContactDrawer && (
+                <ContactUsDrawer
+                  isOpen={showContactDrawer}
+                  onClose={() => setShowContactDrawer(false)}
+                  darkMode={darkMode}
+                />
+              )}
+
+              {/* Add the Privacy Policy drawer here */}
+              {showPrivacyPolicy && (
+                <PrivacyPolicyDrawer
+                  isOpen={showPrivacyPolicy}
+                  onClose={() => setShowPrivacyPolicy(false)}
+                  darkMode={darkMode}
+                />
+              )}
+
+
             <button
               onClick={handleLogout}
-              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
-                darkMode
-                  ? "text-red-400 hover:bg-gray-600"
-                  : "text-red-500 hover:bg-gray-100"
-              }`}
+              className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${darkMode
+                ? "text-red-400 hover:bg-gray-600"
+                : "text-red-500 hover:bg-gray-100"
+                }`}
             >
               <LogOut size={16} />
               Sign out

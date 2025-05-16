@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "./Header";
 import Sidebar from "./SideBar";
 import Chat from "./Chat";
+import SettingsDrawer from "./SettingsDrawer";
 
 const Navbar = () => {
   const [darkMode, setDarkMode] = useState(false);
@@ -11,6 +12,8 @@ const Navbar = () => {
   const [activeChatId, setActiveChatId] = useState(null);
   const [newChatTrigger, setNewChatTrigger] = useState(0);
   const [error, setError] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
 
   useEffect(() => {
     const initializeChats = async () => {

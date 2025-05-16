@@ -567,98 +567,91 @@ const Chat = ({ darkMode, newChatTrigger, activeChatId, setChats, error }) => {
           ))}
         </div>
       )}
-
-      <div
-        className={`w-full relative rounded-lg shadow-sm border ${
-          darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-        } overflow-hidden`}
-      >
-        <div className="p-3 min-h-24">
-          <textarea
-            className={`w-full h-full outline-none resize-none text-sm ${
-              darkMode ? "bg-gray-800 text-white placeholder-gray-400" : ""
-            }`}
-            placeholder={
-              !activeChatId
-                ? "Select or create a chat to start typing"
-                : "Message BotAI..."
-            }
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-            ref={inputRef}
-            disabled={!activeChatId}
-          ></textarea>
-        </div>
-
-        <div
-          className={`border-t ${
-            darkMode ? "border-gray-700" : "border-gray-200"
-          } p-2 flex items-center justify-between`}
+      
+ {/* input  */}
+<div className="w-full flex justify-center">
+  <div className={`max-w-[700px] w-full relative rounded-lg shadow-sm border ${
+    darkMode 
+      ? "border-gray-600 bg-gray-800" 
+      : "border-gray-300 bg-white"
+  }`}>
+    <textarea
+      ref={inputRef}
+      value={inputValue}
+      onChange={(e) => setInputValue(e.target.value)}
+      onKeyDown={handleKeyDown}
+      placeholder="Ask anything"
+      className={`w-full bg-transparent ${
+        darkMode ? "text-gray-200 placeholder-gray-400" : "text-gray-800"
+      } px-4 py-3 resize-none focus:outline-none min-h-[52px] max-h-40`}
+      style={{
+        height: inputValue.length > 100 ? `${Math.min(inputRef.current?.scrollHeight || 52, 160)}px` : '52px',
+      }}
+    />
+     
+    <div className={`border-t ${
+      darkMode ? "border-gray-700" : "border-gray-200"
+    } p-2 flex items-center justify-between`}>
+      <div className="flex">
+        <button
+          onClick={() => fileInputRef.current.click()}
+          className={`p-1.5 rounded-full ${
+            darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+          }`}
+          title="Upload image"
+          disabled={!activeChatId}
         >
-          <div className="flex">
-            <button
-              onClick={() => fileInputRef.current.click()}
-              className={`p-1.5 rounded-full ${
-                darkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-              }`}
-              title="Upload image"
-              disabled={!activeChatId}
-            >
-              <ImageIcon
-                size={16}
-                className={darkMode ? "text-gray-400" : "text-gray-500"}
-              />
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept="image/*"
-                multiple
-                className="hidden"
-              />
-            </button>
-          </div>
-
-          <div className="flex">
-            <button
-              onClick={handleVoiceInput}
-              className={`p-1.5 rounded-full ${
-                isListening
-                  ? "bg-red-500 text-white"
-                  : darkMode
-                  ? "hover:bg-gray-700"
-                  : "hover:bg-gray-100"
-              }`}
-              title={isListening ? "Stop listening" : "Voice input"}
-              disabled={!activeChatId}
-            >
-              <Mic
-                size={16}
-                className={
-                  isListening
-                    ? "text-white"
-                    : darkMode
-                    ? "text-gray-400"
-                    : "text-gray-500"
-                }
-              />
-            </button>
-
-            <button
-              className="bg-blue-600 text-white p-1.5 rounded-full hover:bg-blue-700"
-              onClick={handleSendMessage}
-              disabled={
-                (inputValue.trim() === "" && uploadedImages.length === 0) ||
-                !activeChatId
-              }
-            >
-              <Send size={16} />
-            </button>
-          </div>
-        </div>
+          <ImageIcon size={16} className={darkMode ? "text-gray-400" : "text-gray-500"} />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept="image/*"
+            multiple
+            className="hidden"
+          />
+        </button>
       </div>
+
+      <div className="flex">
+        <button
+          onClick={handleVoiceInput}
+          className={`p-1.5 rounded-full ${
+            isListening 
+              ? "bg-red-500 text-white" 
+              : darkMode 
+                ? "hover:bg-gray-700" 
+                : "hover:bg-gray-100"
+          }`}
+          title={isListening ? "Stop listening" : "Voice input"}
+          disabled={!activeChatId}
+        >
+          <Mic
+            size={16}
+            className={isListening ? "text-white" : darkMode ? "text-gray-400" : "text-gray-500"}
+          />
+        </button>
+
+        <button
+          className={`ml-2 p-1.5 rounded-full ${
+            inputValue.trim() === "" && uploadedImages.length === 0
+              ? darkMode
+                ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+          onClick={handleSendMessage}
+          disabled={
+            (inputValue.trim() === "" && uploadedImages.length === 0) ||
+            !activeChatId
+          }
+        >
+          <Send size={16} />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
     </main>
   );
 };
